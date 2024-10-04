@@ -1,5 +1,3 @@
-# main.py
-
 from api.google_places import RestaurantFinder
 
 

@@ -1,5 +1,3 @@
-# utils/json_handler.py
-
 import json
 
 
