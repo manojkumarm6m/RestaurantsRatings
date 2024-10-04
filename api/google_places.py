@@ -1,58 +1,64 @@
 import requests
-
-# API Key for Google Places API
-API_KEY = 'AIzaSyAaKHs7IXIafaJAuXIT8P_DMFlyXBCVH9I'
+from utils.json_handler import save_to_json  # Import the save_to_json function
 
 
-def get_top_restaurants(city):
-    """
-    Function to fetch the top 10 restaurants in the specified city
-    based on their ratings and reviews using Google Places API.
-    """
+class RestaurantFinder:
+    def __init__(self, api_key):
+        """
+        Initialize the RestaurantFinder with the provided Google Places API key.
+        """
+        self.api_key = api_key
+        self.base_url = "https://maps.googleapis.com/maps/api/place/textsearch/json"
 
-    # Base URL for the Google Places API Text Search
-    base_url = "https://maps.googleapis.com/maps/api/place/textsearch/json"
+    def get_top_restaurants(self, city):
+        """
+        Fetch the top 10 restaurants in the specified city
+        based on their ratings and reviews using Google Places API.
+        """
 
-    # Construct the search query for the Google Places API
-    # The parameters dictionary includes:
-    # - 'query': The search term to look for restaurants.
-    # - 'type': Specifies the type of place to search for, in this case, 'restaurant'.
-    # - 'key': The API key needed for authentication with the Google Places API.
-    query = f"top restaurants in {city}"
-    params = {
-        'query': query,
-        'type': 'restaurant',
-        'key': API_KEY
-    }
+        # Create a search query for the specified city.
+        query = f"top restaurants in {city}"
 
-    # Send a GET request to the Google Places API to retrieve restaurant data based on the search query.
-    response = requests.get(base_url, params=params)
+        # Prepare parameters for the API request, including the search query, type, and API key.
+        params = {
+            'query': query,
+            'type': 'restaurant',
+            'key': self.api_key
+        }
 
-    if response.status_code == 200:
-        # Parse the response JSON data
-        data = response.json()
+        # Send a GET request to the Google Places API to retrieve restaurant data based on the search query.
+        response = requests.get(self.base_url, params=params)
 
-        if data.get('status') == 'OK':
-            # Extract restaurant information from the response
-            restaurants = data['results'][:10]  # Limit to top 10
-            restaurant_data = {}
+        # Parse the response JSON for restaurant information.
+        if response.status_code == 200:
+            data = response.json()
 
-            # Iterate over the list of restaurants to extract their names, ratings, and total user ratings.
-            for restaurant in restaurants:
-                name = restaurant.get('name')
-                rating = restaurant.get('rating')
-                user_ratings_total = restaurant.get('user_ratings_total')
+            if data.get('status') == 'OK': # Ensure the API response is successful before extracting the top 10 restaurants.
+                restaurants = data['results'][:10]  # Limit to top 10
+                restaurant_data = {}
 
-                # Store the restaurant's name as the key and its rating and total user ratings as values in the restaurant_data dictionary.
-                restaurant_data[name] = {
-                    'rating': rating,
-                    'user_ratings_total': user_ratings_total
-                }
+                # Iterate over the list of restaurants to extract their names, ratings, and total user ratings.
+                for restaurant in restaurants:
+                    name = restaurant.get('name')
+                    rating = restaurant.get('rating')
+                    user_ratings_total = restaurant.get('user_ratings_total')
 
-            return restaurant_data
+                    # Store the restaurant's name as the key and its rating and total user ratings as values in the restaurant_data dictionary.
+                    restaurant_data[name] = {
+                        'rating': rating,
+                        'user_ratings_total': user_ratings_total
+                    }
+
+                return restaurant_data
+            else:
+                print("Error: No results found for the specified city.")
+                return None
         else:
-            print("Error: No results found for the specified city.")
+            print(f"Error: API request failed with status code {response.status_code}")
             return None
-    else:
-        print(f"Error: API request failed with status code {response.status_code}")
-        return None
+
+    def save_restaurant_data(self, data, city):
+        """
+        Save restaurant data to a JSON file using the utility function.
+        """
+        save_to_json(data, city)  # Call the utility function to save data
